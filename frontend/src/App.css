@@ -1,0 +1,244 @@
+* {
+  box-sizing: border-box;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family: 'Inter', sans-serif;
+}
+
+/* พื้นหลังเลื่อนไปพร้อมเนื้อหา (ไม่ใช้ fixed เพื่อเลี่ยงบั๊กเส้นขาวของ Chrome) */
+.page-wrapper {
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 60px 20px;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* แผ่นการ์ดใหญ่ครอบเนื้อหาทั้งหมด */
+.page {
+  max-width: 640px;
+  width: 100%;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-radius: 24px;
+  padding: 56px 40px 72px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  color: #1c1c24;
+}
+
+/* เข้ามาแบบ fade + เลื่อนขึ้นเบาๆ ตอนโหลดหน้า */
+.fade-in {
+  animation: fade-up 0.7s ease backwards;
+}
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* HERO */
+.hero {
+  margin-bottom: 56px;
+  text-align: center;
+}
+.eyebrow {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b6b76;
+}
+.hero h1 {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 46px;
+  line-height: 1.2;
+  margin: 12px 0 16px;
+  color: #16161d;
+}
+.accent {
+  font-style: italic;
+  background: linear-gradient(90deg, #3a3a45, #6c6c78);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.hero-sub {
+  font-size: 16px;
+  color: #4a4a55;
+  margin: 0;
+}
+
+/* STATS */
+.stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 40px;
+}
+.stat-card {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 14px;
+  padding: 16px 12px;
+  text-align: center;
+}
+.stat-num {
+  display: block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 26px;
+  font-weight: 500;
+  color: #1c1c24;
+}
+.stat-pending {
+  color: #5a5a66;
+}
+.stat-done {
+  color: #3f4a3f;
+}
+.stat-label {
+  font-size: 12px;
+  color: #55555f;
+}
+
+/* FORM */
+.form-section {
+  margin-bottom: 36px;
+}
+.input-row {
+  display: flex;
+  gap: 10px;
+}
+.input-row input {
+  flex: 1;
+  padding: 14px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: 'Inter', sans-serif;
+  background: rgba(255, 255, 255, 0.9);
+  color: #1c1c24;
+}
+.input-row input::placeholder {
+  color: #6b6b76;
+}
+.input-row input:focus {
+  outline: 2px solid #3a3a45;
+  outline-offset: 1px;
+}
+.btn-primary {
+  background: #1c1c24;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0 22px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+}
+
+/* LIST */
+.empty-state {
+  color: #55555f;
+  text-align: center;
+  padding: 40px 0;
+}
+.task-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.task-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 14px;
+  padding: 14px 16px;
+  animation: fade-up 0.5s ease backwards;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.task-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.stamp {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid #1c1c24;
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.2s ease;
+}
+.stamp:hover {
+  transform: scale(1.1);
+}
+.check {
+  color: #1c1c24;
+  font-size: 14px;
+}
+
+.task-title {
+  flex: 1;
+  font-size: 15px;
+  color: #1c1c24;
+}
+.task-card.done .task-title {
+  text-decoration: line-through;
+  color: #8a8a94;
+}
+
+.btn-delete {
+  background: none;
+  border: none;
+  color: #6b3a3a;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 4px 8px;
+  opacity: 0.6;
+  transition: opacity 0.2s ease;
+}
+.btn-delete:hover {
+  opacity: 1;
+}
+
+@media (max-width: 480px) {
+  .hero h1 {
+    font-size: 32px;
+  }
+  .page {
+    padding: 40px 22px 56px;
+  }
+  .page-wrapper {
+    padding: 30px 14px;
+  }
+}
