@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import './App.css';
 import bgImage from './assets/bg.jpg';
 
+const API_URL = 'https://task-manager-api-gnps.onrender.com';
+
 function App() {
   const [tasks, setTasks] = useState([]);
   const [newTitle, setNewTitle] = useState('');
@@ -11,14 +13,14 @@ function App() {
   }, []);
 
   const fetchTasks = () => {
-    fetch('http://localhost:3000/tasks')
+    fetch(`${API_URL}/tasks`)
       .then((res) => res.json())
       .then((data) => setTasks(data));
   };
 
   const addTask = () => {
     if (!newTitle.trim()) return;
-    fetch('http://localhost:3000/tasks', {
+    fetch(`${API_URL}/tasks`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ title: newTitle })
@@ -31,7 +33,7 @@ function App() {
   };
 
   const toggleDone = (task) => {
-    fetch(`http://localhost:3000/tasks/${task.id}`, {
+    fetch(`${API_URL}/tasks/${task.id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ done: !task.done })
@@ -39,7 +41,7 @@ function App() {
   };
 
   const deleteTask = (id) => {
-    fetch(`http://localhost:3000/tasks/${id}`, {
+    fetch(`${API_URL}/tasks/${id}`, {
       method: 'DELETE'
     }).then(() => fetchTasks());
   };
