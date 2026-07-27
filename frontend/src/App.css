@@ -570,3 +570,65 @@ html, body {
   font-size: 14px;
   cursor: pointer;
 }
+/* ---------- CATEGORY: ปุ่มลบ + เพิ่มหมวดหมู่เอง ---------- */
+.category-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.category-remove {
+  opacity: 0;
+  font-size: 15px;
+  line-height: 1;
+  padding: 0 4px;
+  transition: opacity 0.15s ease;
+}
+.category-item:hover .category-remove {
+  opacity: 0.6;
+}
+.category-remove:hover {
+  opacity: 1 !important;
+}
+
+.add-category-btn {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 1px dashed var(--glass-border);
+  color: var(--text-secondary);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  margin-top: 4px;
+  transition: background 0.2s ease;
+}
+.add-category-btn:hover {
+  background: var(--hover-bg);
+}
+
+.add-category-row {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+.add-category-input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--glass-border);
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  background: var(--input-bg);
+  color: var(--text-primary);
+}
+.add-category-confirm {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  width: 30px;
+  cursor: pointer;
+  font-size: 14px;
+}

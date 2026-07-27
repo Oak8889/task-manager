@@ -3,7 +3,7 @@ import './App.css';
 import defaultBg from './assets/bg.jpg';
 
 const API_URL = 'https://task-manager-api-gnps.onrender.com';
-const CATEGORIES = ['ทั้งหมด', 'เรียน', 'ฝึกงาน', 'ส่วนตัว'];
+const BASE_CATEGORIES = ['งาน', 'เรียน'];
 const MONTH_NAMES = [
   'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
   'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'
@@ -17,8 +17,20 @@ function dateKey(y, m, d) {
 function App() {
   const [tasks, setTasks] = useState([]);
   const [newTitle, setNewTitle] = useState('');
-  const [newCategory, setNewCategory] = useState('ส่วนตัว');
+
+  const [customCategories, setCustomCategories] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('customCategories')) || [];
+    } catch {
+      return [];
+    }
+  });
+  const allCategories = [...BASE_CATEGORIES, ...customCategories];
+  const [newCategory, setNewCategory] = useState(BASE_CATEGORIES[0]);
   const [activeCategory, setActiveCategory] = useState('ทั้งหมด');
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [categoryDraft, setCategoryDraft] = useState('');
+
   const [username, setUsername] = useState(
     localStorage.getItem('username') || ''
   );
@@ -34,11 +46,9 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const fileInputRef = useRef(null);
 
-  // ---------- ปฏิทิน: เดือน/ปีที่กำลังดู ----------
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMonth, setViewMonth] = useState(now.getMonth());
 
-  // ---------- โน้ตรายวัน ----------
   const [notes, setNotes] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem('calendarNotes')) || {};
@@ -46,7 +56,7 @@ function App() {
       return {};
     }
   });
-  const [selectedDate, setSelectedDate] = useState(null); // "YYYY-MM-DD" หรือ null
+  const [selectedDate, setSelectedDate] = useState(null);
   const [noteDraft, setNoteDraft] = useState('');
 
   useEffect(() => {
@@ -69,6 +79,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem('calendarNotes', JSON.stringify(notes));
   }, [notes]);
+
+  useEffect(() => {
+    localStorage.setItem('customCategories', JSON.stringify(customCategories));
+  }, [customCategories]);
 
   const fetchTasks = () => {
     fetch(`${API_URL}/tasks`)
@@ -124,6 +138,25 @@ function App() {
     localStorage.removeItem('customBg');
   };
 
+  const addCustomCategory = () => {
+    const name = categoryDraft.trim();
+    if (!name) return;
+    if (allCategories.includes(name)) {
+      setCategoryDraft('');
+      setShowAddCategory(false);
+      return;
+    }
+    setCustomCategories((prev) => [...prev, name]);
+    setCategoryDraft('');
+    setShowAddCategory(false);
+  };
+
+  const removeCustomCategory = (cat) => {
+    setCustomCategories((prev) => prev.filter((c) => c !== cat));
+    if (activeCategory === cat) setActiveCategory('ทั้งหมด');
+    if (newCategory === cat) setNewCategory(BASE_CATEGORIES[0]);
+  };
+
   const filteredTasks =
     activeCategory === 'ทั้งหมด'
       ? tasks
@@ -132,7 +165,7 @@ function App() {
   const doneCount = filteredTasks.filter((t) => t.done).length;
   const pendingCount = filteredTasks.length - doneCount;
 
-  // ---------- ปฏิทิน คำนวณ ----------
+  // ---------- ปฏิทิน ----------
   const today = now.getDate();
   const isCurrentMonth =
     viewYear === now.getFullYear() && viewMonth === now.getMonth();
@@ -225,7 +258,7 @@ function App() {
               />
             ) : (
               <p className="username-display" onClick={() => setEditingName(true)}>
-                👋 {username || 'ตั้งชื่อของคุณ'}
+                {username || 'ตั้งชื่อของคุณ'}
               </p>
             )}
           </div>
@@ -233,16 +266,56 @@ function App() {
           <div className="sidebar-section">
             <p className="sidebar-title">หมวดหมู่</p>
             <ul className="category-list">
-              {CATEGORIES.map((cat) => (
+              <li
+                className={`category-item ${activeCategory === 'ทั้งหมด' ? 'active' : ''}`}
+                onClick={() => setActiveCategory('ทั้งหมด')}
+              >
+                ทั้งหมด
+              </li>
+              {allCategories.map((cat) => (
                 <li
                   key={cat}
                   className={`category-item ${activeCategory === cat ? 'active' : ''}`}
                   onClick={() => setActiveCategory(cat)}
                 >
-                  {cat}
+                  <span>{cat}</span>
+                  {!BASE_CATEGORIES.includes(cat) && (
+                    <span
+                      className="category-remove"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeCustomCategory(cat);
+                      }}
+                    >
+                      ×
+                    </span>
+                  )}
                 </li>
               ))}
             </ul>
+
+            {showAddCategory ? (
+              <div className="add-category-row">
+                <input
+                  autoFocus
+                  className="add-category-input"
+                  value={categoryDraft}
+                  onChange={(e) => setCategoryDraft(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && addCustomCategory()}
+                  placeholder="ชื่อหมวดหมู่ใหม่..."
+                />
+                <button className="add-category-confirm" onClick={addCustomCategory}>
+                  ✓
+                </button>
+              </div>
+            ) : (
+              <button
+                className="add-category-btn"
+                onClick={() => setShowAddCategory(true)}
+              >
+                + อื่นๆ
+              </button>
+            )}
           </div>
 
           <div className="sidebar-section settings-section">
@@ -335,7 +408,7 @@ function App() {
                 value={newCategory}
                 onChange={(e) => setNewCategory(e.target.value)}
               >
-                {CATEGORIES.filter((c) => c !== 'ทั้งหมด').map((c) => (
+                {allCategories.map((c) => (
                   <option key={c} value={c}>{c}</option>
                 ))}
               </select>
