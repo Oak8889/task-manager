@@ -4,6 +4,15 @@ import defaultBg from './assets/bg.jpg';
 
 const API_URL = 'https://task-manager-api-gnps.onrender.com';
 const CATEGORIES = ['ทั้งหมด', 'เรียน', 'ฝึกงาน', 'ส่วนตัว'];
+const MONTH_NAMES = [
+  'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
+  'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'
+];
+const WEEKDAYS = ['อา','จ','อ','พ','พฤ','ศ','ส'];
+
+function dateKey(y, m, d) {
+  return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
 
 function App() {
   const [tasks, setTasks] = useState([]);
@@ -25,6 +34,21 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const fileInputRef = useRef(null);
 
+  // ---------- ปฏิทิน: เดือน/ปีที่กำลังดู ----------
+  const [viewYear, setViewYear] = useState(now.getFullYear());
+  const [viewMonth, setViewMonth] = useState(now.getMonth());
+
+  // ---------- โน้ตรายวัน ----------
+  const [notes, setNotes] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('calendarNotes')) || {};
+    } catch {
+      return {};
+    }
+  });
+  const [selectedDate, setSelectedDate] = useState(null); // "YYYY-MM-DD" หรือ null
+  const [noteDraft, setNoteDraft] = useState('');
+
   useEffect(() => {
     fetchTasks();
   }, []);
@@ -41,6 +65,10 @@ function App() {
   useEffect(() => {
     localStorage.setItem('username', username);
   }, [username]);
+
+  useEffect(() => {
+    localStorage.setItem('calendarNotes', JSON.stringify(notes));
+  }, [notes]);
 
   const fetchTasks = () => {
     fetch(`${API_URL}/tasks`)
@@ -104,19 +132,58 @@ function App() {
   const doneCount = filteredTasks.filter((t) => t.done).length;
   const pendingCount = filteredTasks.length - doneCount;
 
-  // ---------- ปฏิทิน ----------
-  const year = now.getFullYear();
-  const month = now.getMonth();
+  // ---------- ปฏิทิน คำนวณ ----------
   const today = now.getDate();
-  const firstDayIndex = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const monthNames = [
-    'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
-    'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'
-  ];
+  const isCurrentMonth =
+    viewYear === now.getFullYear() && viewMonth === now.getMonth();
+  const firstDayIndex = new Date(viewYear, viewMonth, 1).getDay();
+  const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
   const calendarCells = [];
   for (let i = 0; i < firstDayIndex; i++) calendarCells.push(null);
   for (let d = 1; d <= daysInMonth; d++) calendarCells.push(d);
+
+  const goPrevMonth = () => {
+    if (viewMonth === 0) {
+      setViewMonth(11);
+      setViewYear((y) => y - 1);
+    } else {
+      setViewMonth((m) => m - 1);
+    }
+  };
+  const goNextMonth = () => {
+    if (viewMonth === 11) {
+      setViewMonth(0);
+      setViewYear((y) => y + 1);
+    } else {
+      setViewMonth((m) => m + 1);
+    }
+  };
+  const goToday = () => {
+    setViewYear(now.getFullYear());
+    setViewMonth(now.getMonth());
+  };
+
+  const openDay = (d) => {
+    if (!d) return;
+    const key = dateKey(viewYear, viewMonth, d);
+    setSelectedDate(key);
+    setNoteDraft(notes[key] || '');
+  };
+
+  const saveNote = () => {
+    setNotes((prev) => {
+      const next = { ...prev };
+      if (noteDraft.trim()) {
+        next[selectedDate] = noteDraft.trim();
+      } else {
+        delete next[selectedDate];
+      }
+      return next;
+    });
+    setSelectedDate(null);
+  };
+
+  const closeNoteModal = () => setSelectedDate(null);
 
   const timeString = now.toLocaleTimeString('th-TH', {
     hour: '2-digit',
@@ -129,6 +196,13 @@ function App() {
     month: 'long',
     year: 'numeric'
   });
+
+  const selectedDateLabel = selectedDate
+    ? (() => {
+        const [y, m, d] = selectedDate.split('-').map(Number);
+        return `${d} ${MONTH_NAMES[m - 1]} ${y + 543}`;
+      })()
+    : '';
 
   return (
     <div
@@ -151,7 +225,7 @@ function App() {
               />
             ) : (
               <p className="username-display" onClick={() => setEditingName(true)}>
-                 {username || 'ตั้งชื่อของคุณ'}
+                👋 {username || 'ตั้งชื่อของคุณ'}
               </p>
             )}
           </div>
@@ -171,7 +245,6 @@ function App() {
             </ul>
           </div>
 
-          {/* ปุ่มตั้งค่า */}
           <div className="sidebar-section settings-section">
             <button
               className="settings-toggle"
@@ -223,7 +296,7 @@ function App() {
         {/* เนื้อหาหลัก */}
         <div className="page">
           <section className="fade-in hero" style={{ animationDelay: '0ms' }}>
-            <span className="eyebrow">สมุดบันทึกส่วนตัว</span>
+            <span className="eyebrow">สมุดงานส่วนตัว</span>
             <h1>
               จัดระเบียบงาน <br />
               <span className="accent">ด้วย OakNote</span>
@@ -309,25 +382,72 @@ function App() {
           </div>
 
           <div className="calendar-block">
-            <p className="calendar-title">
-              {monthNames[month]} {year + 543}
-            </p>
+            <div className="calendar-header">
+              <button className="cal-nav-btn" onClick={goPrevMonth} aria-label="เดือนก่อนหน้า">
+                ‹
+              </button>
+              <p className="calendar-title">
+                {MONTH_NAMES[viewMonth]} {viewYear + 543}
+              </p>
+              <button className="cal-nav-btn" onClick={goNextMonth} aria-label="เดือนถัดไป">
+                ›
+              </button>
+            </div>
+
+            {!isCurrentMonth && (
+              <button className="cal-today-btn" onClick={goToday}>
+                กลับไปวันนี้
+              </button>
+            )}
+
             <div className="calendar-grid">
-              {['อา','จ','อ','พ','พฤ','ศ','ส'].map((d) => (
+              {WEEKDAYS.map((d) => (
                 <span key={d} className="calendar-weekday">{d}</span>
               ))}
-              {calendarCells.map((d, i) => (
-                <span
-                  key={i}
-                  className={`calendar-day ${d === today ? 'today' : ''} ${!d ? 'empty' : ''}`}
-                >
-                  {d || ''}
-                </span>
-              ))}
+              {calendarCells.map((d, i) => {
+                const key = d ? dateKey(viewYear, viewMonth, d) : null;
+                const hasNote = key && notes[key];
+                const isToday = isCurrentMonth && d === today;
+                return (
+                  <button
+                    key={i}
+                    className={`calendar-day ${isToday ? 'today' : ''} ${!d ? 'empty' : ''} ${hasNote ? 'has-note' : ''}`}
+                    onClick={() => openDay(d)}
+                    disabled={!d}
+                  >
+                    {d || ''}
+                    {hasNote && <span className="note-dot" />}
+                  </button>
+                );
+              })}
             </div>
           </div>
         </aside>
       </div>
+
+      {/* MODAL โน้ตรายวัน */}
+      {selectedDate && (
+        <div className="note-modal-overlay" onClick={closeNoteModal}>
+          <div className="note-modal" onClick={(e) => e.stopPropagation()}>
+            <p className="note-modal-title">📝 {selectedDateLabel}</p>
+            <textarea
+              className="note-textarea"
+              value={noteDraft}
+              onChange={(e) => setNoteDraft(e.target.value)}
+              placeholder="เขียนโน้ตกันลืมสำหรับวันนี้..."
+              autoFocus
+            />
+            <div className="note-modal-actions">
+              <button className="btn-secondary" onClick={closeNoteModal}>
+                ยกเลิก
+              </button>
+              <button className="btn-primary" onClick={saveNote}>
+                บันทึก
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
