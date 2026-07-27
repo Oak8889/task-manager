@@ -35,7 +35,7 @@ body {
   --glass-border-strong: rgba(255, 255, 255, 0.14);
   --text-primary: #f2f2f6;
   --text-secondary: #b7b7c3;
-  --text-muted: #85859?2;
+  --text-muted: #858592;
   --input-bg: rgba(255, 255, 255, 0.08);
   --hover-bg: rgba(255, 255, 255, 0.08);
 }
@@ -395,13 +395,21 @@ body {
 .btn-delete:hover { opacity: 1; }
 
 @media (max-width: 900px) {
-  .page-grid { grid-template-columns: 1fr; }
+  .page-grid {
+    grid-template-columns: 1fr;
+    max-width: 100%;
+    gap: 14px;
+  }
   .sidebar-left, .sidebar-right { order: 2; }
   .page { order: 1; }
+  .page-wrapper {
+    padding: 24px 12px;
+    align-items: stretch;
+  }
 }
 
 @media (max-width: 480px) {
   .hero h1 { font-size: 32px; }
   .page { padding: 40px 22px 56px; }
-  .page-wrapper { padding: 30px 14px; }
+  .page-wrapper { padding: 20px 10px; }
 }
