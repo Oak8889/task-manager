@@ -9,8 +9,8 @@ app.use(express.json());
 
 // เก็บข้อมูล task ไว้ใน memory ก่อน (array ธรรมดา)
 let tasks = [
-  { id: 1, title: 'เรียน React', done: false },
-  { id: 2, title: 'เตรียมสัมภาษณ์', done: false }
+  { id: 1, title: 'เรียน React', done: false, category: 'เรียน' },
+  { id: 2, title: 'เตรียมสัมภาษณ์', done: false, category: 'ฝึกงาน' }
 ];
 
 // GET: ดึงรายการ task ทั้งหมด
@@ -23,7 +23,8 @@ app.post('/tasks', (req, res) => {
   const newTask = {
     id: Date.now(),
     title: req.body.title,
-    done: false
+    done: false,
+    category: req.body.category || 'ส่วนตัว'
   };
   tasks.push(newTask);
   res.json(newTask);
