@@ -394,22 +394,47 @@ body {
 }
 .btn-delete:hover { opacity: 1; }
 
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+}
+
 @media (max-width: 900px) {
   .page-grid {
     grid-template-columns: 1fr;
     max-width: 100%;
+    width: 100%;
     gap: 14px;
   }
   .sidebar-left, .sidebar-right { order: 2; }
   .page { order: 1; }
   .page-wrapper {
-    padding: 24px 12px;
+    padding: 20px 10px;
     align-items: stretch;
+    width: 100%;
   }
 }
 
-@media (max-width: 480px) {
-  .hero h1 { font-size: 32px; }
-  .page { padding: 40px 22px 56px; }
-  .page-wrapper { padding: 20px 10px; }
+@media (max-width: 600px) {
+  .hero h1 { font-size: 30px; }
+  .hero-sub { font-size: 14px; }
+  .page { padding: 32px 18px 44px; }
+  .page-wrapper { padding: 16px 8px; }
+  .stats { gap: 8px; }
+  .stat-card { padding: 12px 6px; }
+  .stat-num { font-size: 20px; }
+  .stat-label { font-size: 10px; }
+  .input-row {
+    flex-wrap: wrap;
+  }
+  .input-row input {
+    flex: 1 1 100%;
+  }
+  .category-select {
+    flex: 1;
+  }
+  .btn-primary {
+    flex: 1;
+    padding: 10px 0;
+  }
 }
