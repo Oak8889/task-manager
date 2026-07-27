@@ -1,44 +1,42 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './App.css';
-import bgImage from './assets/bg.jpg';
+import defaultBg from './assets/bg.jpg';
 
 const API_URL = 'https://task-manager-api-gnps.onrender.com';
 const CATEGORIES = ['ทั้งหมด', 'เรียน', 'ฝึกงาน', 'ส่วนตัว'];
-const THEMES = [
-  { name: 'ม่วงเทา', color: '#3a3a45' },
-  { name: 'น้ำเงิน', color: '#2b5a8c' },
-  { name: 'เขียว', color: '#3f6b4a' },
-  { name: 'แดงอิฐ', color: '#8c3d3d' }
-];
 
 function App() {
   const [tasks, setTasks] = useState([]);
   const [newTitle, setNewTitle] = useState('');
   const [newCategory, setNewCategory] = useState('ส่วนตัว');
   const [activeCategory, setActiveCategory] = useState('ทั้งหมด');
-  const [themeColor, setThemeColor] = useState(
-    localStorage.getItem('themeColor') || '#3a3a45'
-  );
   const [username, setUsername] = useState(
     localStorage.getItem('username') || ''
   );
   const [editingName, setEditingName] = useState(false);
   const [now, setNow] = useState(new Date());
 
+  const [themeMode, setThemeMode] = useState(
+    localStorage.getItem('themeMode') || 'light'
+  );
+  const [bgImage, setBgImage] = useState(
+    localStorage.getItem('customBg') || defaultBg
+  );
+  const [showSettings, setShowSettings] = useState(false);
+  const fileInputRef = useRef(null);
+
   useEffect(() => {
     fetchTasks();
   }, []);
 
-  // นาฬิกาเรียลไทม์ อัปเดตทุกวินาที
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
-    document.documentElement.style.setProperty('--accent', themeColor);
-    localStorage.setItem('themeColor', themeColor);
-  }, [themeColor]);
+    localStorage.setItem('themeMode', themeMode);
+  }, [themeMode]);
 
   useEffect(() => {
     localStorage.setItem('username', username);
@@ -78,6 +76,26 @@ function App() {
     }).then(() => fetchTasks());
   };
 
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      setBgImage(reader.result);
+      try {
+        localStorage.setItem('customBg', reader.result);
+      } catch (err) {
+        console.warn('รูปใหญ่เกินกว่าจะบันทึกไว้ถาวรได้ แต่ใช้งานได้ในเซสชันนี้');
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const resetBg = () => {
+    setBgImage(defaultBg);
+    localStorage.removeItem('customBg');
+  };
+
   const filteredTasks =
     activeCategory === 'ทั้งหมด'
       ? tasks
@@ -113,7 +131,10 @@ function App() {
   });
 
   return (
-    <div className="page-wrapper" style={{ backgroundImage: `url(${bgImage})` }}>
+    <div
+      className={`page-wrapper theme-${themeMode}`}
+      style={{ backgroundImage: `url(${bgImage})` }}
+    >
       <div className="page-grid">
         {/* SIDEBAR ซ้าย */}
         <aside className="sidebar-left fade-in">
@@ -130,7 +151,7 @@ function App() {
               />
             ) : (
               <p className="username-display" onClick={() => setEditingName(true)}>
-                👋 {username || 'ตั้งชื่อของคุณ'}
+                 {username || 'ตั้งชื่อของคุณ'}
               </p>
             )}
           </div>
@@ -150,29 +171,62 @@ function App() {
             </ul>
           </div>
 
-          <div className="sidebar-section">
-            <p className="sidebar-title">ธีมสี</p>
-            <div className="theme-swatches">
-              {THEMES.map((t) => (
+          {/* ปุ่มตั้งค่า */}
+          <div className="sidebar-section settings-section">
+            <button
+              className="settings-toggle"
+              onClick={() => setShowSettings((v) => !v)}
+            >
+              ⚙️ ตั้งค่า
+            </button>
+
+            {showSettings && (
+              <div className="settings-panel">
+                <p className="sidebar-title">พื้นหลัง</p>
                 <button
-                  key={t.color}
-                  className={`swatch ${themeColor === t.color ? 'active' : ''}`}
-                  style={{ background: t.color }}
-                  title={t.name}
-                  onClick={() => setThemeColor(t.color)}
+                  className="upload-btn"
+                  onClick={() => fileInputRef.current.click()}
+                >
+                  📁 อัปโหลดรูปภาพ
+                </button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={fileInputRef}
+                  onChange={handleImageUpload}
+                  style={{ display: 'none' }}
                 />
-              ))}
-            </div>
+                <button className="reset-btn" onClick={resetBg}>
+                  รีเซ็ตพื้นหลัง
+                </button>
+
+                <p className="sidebar-title" style={{ marginTop: 18 }}>โหมดธีม</p>
+                <div className="theme-toggle">
+                  <button
+                    className={`theme-btn ${themeMode === 'light' ? 'active' : ''}`}
+                    onClick={() => setThemeMode('light')}
+                  >
+                    ☀️ สว่าง
+                  </button>
+                  <button
+                    className={`theme-btn ${themeMode === 'dark' ? 'active' : ''}`}
+                    onClick={() => setThemeMode('dark')}
+                  >
+                    🌙 มืด
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </aside>
 
         {/* เนื้อหาหลัก */}
         <div className="page">
           <section className="fade-in hero" style={{ animationDelay: '0ms' }}>
-            <span className="eyebrow">สมุดงานส่วนตัว</span>
+            <span className="eyebrow">สมุดบันทึกส่วนตัว</span>
             <h1>
-              จัดระเบียบวันนี้ <br />
-              <span className="accent">ทีละงาน</span>
+              จัดระเบียบงาน <br />
+              <span className="accent">ด้วย OakNote</span>
             </h1>
             <p className="hero-sub">
               บันทึกสิ่งที่ต้องทำ ติ๊กเมื่อเสร็จ แล้วก้าวต่อไป
