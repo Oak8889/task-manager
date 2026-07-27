@@ -3,7 +3,7 @@ import './App.css';
 import defaultBg from './assets/bg.jpg';
 
 const API_URL = 'https://task-manager-api-gnps.onrender.com';
-const BASE_CATEGORIES = ['งาน', 'เรียน'];
+const BASE_CATEGORIES = ['งาน', 'ส่วนตัว'];
 const MONTH_NAMES = [
   'มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน',
   'กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'
