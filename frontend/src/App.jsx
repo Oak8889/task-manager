@@ -105,7 +105,7 @@ function App() {
   };
 
   const toggleDone = (task) => {
-    fetch(`${API_URL}/tasks/${task.id}`, {
+    fetch(`${API_URL}/tasks/${task._id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ done: !task.done })
@@ -425,7 +425,7 @@ function App() {
             <ul className="task-list">
               {filteredTasks.map((task, i) => (
                 <li
-                  key={task.id}
+                  key={task._id}
                   className={`task-card ${task.done ? 'done' : ''}`}
                   style={{ animationDelay: `${400 + i * 60}ms` }}
                 >
@@ -438,7 +438,7 @@ function App() {
                   </button>
                   <span className="task-title">{task.title}</span>
                   <span className="task-tag">{task.category}</span>
-                  <button className="btn-delete" onClick={() => deleteTask(task.id)}>
+                  <button className="btn-delete" onClick={() => deleteTask(task._id)}>
                     ลบ
                   </button>
                 </li>
