@@ -632,3 +632,87 @@ html, body {
   cursor: pointer;
   font-size: 14px;
 }
+/* ---------- AUTH SCREEN ---------- */
+.auth-card {
+  background: var(--glass-strong);
+  border: 1px solid var(--glass-border-strong);
+  border-radius: 24px;
+  padding: 48px 40px;
+  width: 100%;
+  max-width: 380px;
+  margin: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+  color: var(--text-primary);
+}
+.auth-title {
+  font-family: 'Fraunces', serif;
+  font-weight: 600;
+  font-size: 30px;
+  text-align: center;
+  margin: 8px 0 4px;
+  color: var(--text-primary);
+}
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
+.auth-input {
+  padding: 13px 16px;
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: 'Inter', sans-serif;
+  background: var(--input-bg);
+  color: var(--text-primary);
+}
+.auth-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+.auth-error {
+  color: #c1666b;
+  font-size: 13px;
+  margin: 0;
+  text-align: center;
+}
+.auth-submit {
+  height: 46px;
+  margin-top: 4px;
+}
+.auth-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.auth-switch {
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 8px;
+}
+.auth-switch span {
+  color: var(--accent);
+  cursor: pointer;
+  font-weight: 600;
+}
+.auth-switch span:hover {
+  text-decoration: underline;
+}
+
+/* ---------- LOGOUT BUTTON ---------- */
+.logout-btn {
+  width: 100%;
+  margin-top: 6px;
+  background: none;
+  border: 1px solid var(--glass-border);
+  color: var(--text-secondary);
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.logout-btn:hover {
+  background: var(--hover-bg);
+}

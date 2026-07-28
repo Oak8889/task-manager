@@ -15,6 +15,14 @@ function dateKey(y, m, d) {
 }
 
 function App() {
+  // ---------- AUTH ----------
+  const [token, setToken] = useState(localStorage.getItem('token') || null);
+  const [authUsername, setAuthUsername] = useState(localStorage.getItem('authUsername') || '');
+  const [authMode, setAuthMode] = useState('login'); // 'login' หรือ 'register'
+  const [authForm, setAuthForm] = useState({ username: '', password: '' });
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+
   const [tasks, setTasks] = useState([]);
   const [newTitle, setNewTitle] = useState('');
 
@@ -31,9 +39,6 @@ function App() {
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [categoryDraft, setCategoryDraft] = useState('');
 
-  const [username, setUsername] = useState(
-    localStorage.getItem('username') || ''
-  );
   const [editingName, setEditingName] = useState(false);
   const [now, setNow] = useState(new Date());
 
@@ -60,8 +65,8 @@ function App() {
   const [noteDraft, setNoteDraft] = useState('');
 
   useEffect(() => {
-    fetchTasks();
-  }, []);
+    if (token) fetchTasks();
+  }, [token]);
 
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 1000);
@@ -73,10 +78,6 @@ function App() {
   }, [themeMode]);
 
   useEffect(() => {
-    localStorage.setItem('username', username);
-  }, [username]);
-
-  useEffect(() => {
     localStorage.setItem('calendarNotes', JSON.stringify(notes));
   }, [notes]);
 
@@ -84,38 +85,110 @@ function App() {
     localStorage.setItem('customCategories', JSON.stringify(customCategories));
   }, [customCategories]);
 
+  // ---------- AUTH FUNCTIONS ----------
+  const handleAuthSubmit = () => {
+    if (!authForm.username.trim() || !authForm.password.trim()) {
+      setAuthError('กรุณากรอกให้ครบ');
+      return;
+    }
+    setAuthError('');
+    setAuthLoading(true);
+    const endpoint = authMode === 'login' ? '/auth/login' : '/auth/register';
+
+    fetch(`${API_URL}${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(authForm)
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'เกิดข้อผิดพลาด');
+        return data;
+      })
+      .then((data) => {
+        setToken(data.token);
+        setAuthUsername(data.username);
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('authUsername', data.username);
+        setAuthForm({ username: '', password: '' });
+      })
+      .catch((err) => setAuthError(err.message))
+      .finally(() => setAuthLoading(false));
+  };
+
+  const handleLogout = () => {
+    setToken(null);
+    setAuthUsername('');
+    setTasks([]);
+    localStorage.removeItem('token');
+    localStorage.removeItem('authUsername');
+  };
+
+  const authHeaders = () => ({
+    'Content-Type': 'application/json',
+    Authorization: `Bearer ${token}`
+  });
+
+  const handleAuthedFetchError = (res) => {
+    if (res.status === 401) {
+      handleLogout();
+      throw new Error('เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่');
+    }
+    return res;
+  };
+
+  // ---------- TASK FUNCTIONS ----------
   const fetchTasks = () => {
-    fetch(`${API_URL}/tasks`)
-      .then((res) => res.json())
-      .then((data) => setTasks(data));
+    fetch(`${API_URL}/tasks`, { headers: authHeaders() })
+      .then((res) => {
+        handleAuthedFetchError(res);
+        return res.json();
+      })
+      .then((data) => setTasks(Array.isArray(data) ? data : []))
+      .catch(() => {});
   };
 
   const addTask = () => {
     if (!newTitle.trim()) return;
     fetch(`${API_URL}/tasks`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders(),
       body: JSON.stringify({ title: newTitle, category: newCategory })
     })
-      .then((res) => res.json())
+      .then((res) => {
+        handleAuthedFetchError(res);
+        return res.json();
+      })
       .then(() => {
         setNewTitle('');
         fetchTasks();
-      });
+      })
+      .catch(() => {});
   };
 
   const toggleDone = (task) => {
     fetch(`${API_URL}/tasks/${task._id}`, {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: authHeaders(),
       body: JSON.stringify({ done: !task.done })
-    }).then(() => fetchTasks());
+    })
+      .then((res) => {
+        handleAuthedFetchError(res);
+        return fetchTasks();
+      })
+      .catch(() => {});
   };
 
   const deleteTask = (id) => {
     fetch(`${API_URL}/tasks/${id}`, {
-      method: 'DELETE'
-    }).then(() => fetchTasks());
+      method: 'DELETE',
+      headers: authHeaders()
+    })
+      .then((res) => {
+        handleAuthedFetchError(res);
+        return fetchTasks();
+      })
+      .catch(() => {});
   };
 
   const handleImageUpload = (e) => {
@@ -237,6 +310,68 @@ function App() {
       })()
     : '';
 
+  // ---------- ถ้ายังไม่ Login: แสดงหน้า Login/สมัครสมาชิก ----------
+  if (!token) {
+    return (
+      <div
+        className={`page-wrapper theme-${themeMode}`}
+        style={{ backgroundImage: `url(${bgImage})` }}
+      >
+        <div className="auth-card fade-in">
+          <p className="eyebrow" style={{ textAlign: 'center' }}>สมุดงานส่วนตัว</p>
+          <h1 className="auth-title">
+            {authMode === 'login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
+          </h1>
+          <p className="hero-sub" style={{ textAlign: 'center', marginBottom: 24 }}>
+            OakNote — จัดระเบียบงานของคุณ
+          </p>
+
+          <div className="auth-form">
+            <input
+              type="text"
+              className="auth-input"
+              placeholder="ชื่อผู้ใช้"
+              value={authForm.username}
+              onChange={(e) => setAuthForm({ ...authForm, username: e.target.value })}
+              onKeyDown={(e) => e.key === 'Enter' && handleAuthSubmit()}
+            />
+            <input
+              type="password"
+              className="auth-input"
+              placeholder="รหัสผ่าน"
+              value={authForm.password}
+              onChange={(e) => setAuthForm({ ...authForm, password: e.target.value })}
+              onKeyDown={(e) => e.key === 'Enter' && handleAuthSubmit()}
+            />
+
+            {authError && <p className="auth-error">{authError}</p>}
+
+            <button
+              className="btn-primary auth-submit"
+              onClick={handleAuthSubmit}
+              disabled={authLoading}
+            >
+              {authLoading ? 'กำลังดำเนินการ...' : authMode === 'login' ? 'เข้าสู่ระบบ' : 'สมัครสมาชิก'}
+            </button>
+
+            <p className="auth-switch">
+              {authMode === 'login' ? 'ยังไม่มีบัญชี?' : 'มีบัญชีอยู่แล้ว?'}{' '}
+              <span
+                onClick={() => {
+                  setAuthMode(authMode === 'login' ? 'register' : 'login');
+                  setAuthError('');
+                }}
+              >
+                {authMode === 'login' ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ'}
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ---------- ถ้า Login แล้ว: แสดงแอปตามปกติ ----------
   return (
     <div
       className={`page-wrapper theme-${themeMode}`}
@@ -246,21 +381,12 @@ function App() {
         {/* SIDEBAR ซ้าย */}
         <aside className="sidebar-left fade-in">
           <div className="user-block">
-            {editingName ? (
-              <input
-                autoFocus
-                className="username-input"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                onBlur={() => setEditingName(false)}
-                onKeyDown={(e) => e.key === 'Enter' && setEditingName(false)}
-                placeholder="ใส่ชื่อของคุณ"
-              />
-            ) : (
-              <p className="username-display" onClick={() => setEditingName(true)}>
-                {username || 'ตั้งชื่อของคุณ'}
-              </p>
-            )}
+            <p className="username-display" style={{ cursor: 'default' }}>
+              👋 {authUsername}
+            </p>
+            <button className="logout-btn" onClick={handleLogout}>
+              ออกจากระบบ
+            </button>
           </div>
 
           <div className="sidebar-section">
